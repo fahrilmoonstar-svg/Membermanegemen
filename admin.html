@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - FahriL Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            color: white;
+            padding: 2rem 1rem;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo h2 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .user-avatar {
+            font-size: 2.5rem;
+        }
+
+        .user-name {
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .user-role {
+            background: #ef4444;
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 1rem;
+            background: rgba(239,68,68,0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .nav-btn {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 6px 0;
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(239,68,68,0.2);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f97316;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f1f5f9;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 4px;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // ==================== ADMIN PANEL - FAHRIL PROJECT ====================
+        
+        // Data default
+        const DEFAULT_ADMIN = {
+            id: 'admin_001',
+            username: 'admin',
+            password: 'admin123',
+            name: 'FahriL Admin',
+            role: 'admin',
+            email: 'admin@fahriL.com',
+            phone: '081234567890'
+        };
+
+        const DEFAULT_MEMBERS = [
+            { id: 'mem_001', username: 'ahmad', password: 'member123', name: 'Ahmad Fauzi', email: 'ahmad@example.com', phone: '081234567891', role: 'member', joinDate: new Date().toISOString() },
+            { id: 'mem_002', username: 'siti', password: 'member123', name: 'Siti Nurhaliza', email: 'siti@example.com', phone: '081234567892', role: 'member', joinDate: new Date().toISOString() },
+            { id: 'mem_003', username: 'budi', password: 'member123', name: 'Budi Santoso', email: 'budi@example.com', phone: '081234567893', role: 'member', joinDate: new Date().toISOString() }
+        ];
+
+        const STORAGE_USERS = 'fahriL_admin_users';
+        const STORAGE_SESSION = 'fahriL_admin_session';
+
+        function generateId() {
+            return 'MEM_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('id-ID');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+            });
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('view-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            if (container) {
+                container.insertBefore(alertDiv, container.firstChild);
+                setTimeout(() => alertDiv.remove(), 3000);
+            }
+        }
+
+        class UserManager {
+            constructor() {
+                this.loadUsers();
+            }
+
+            loadUsers() {
+                const stored = localStorage.getItem(STORAGE_USERS);
+                if (stored) {
+                    this.users = JSON.parse(stored);
+                } else {
+                    this.users = [DEFAULT_ADMIN, ...DEFAULT_MEMBERS];
+                    this.saveUsers();
+                }
+            }
+
+            saveUsers() {
+                localStorage.setItem(STORAGE_USERS, JSON.stringify(this.users));
+            }
+
+            getAllMembers() {
+                return this.users.filter(u => u.role === 'member');
+            }
+
+            getCurrentAdmin() {
+                const session = localStorage.getItem(STORAGE_SESSION);
+                return session ? JSON.parse(session) : null;
+            }
+
+            login(username, password) {
+                const user = this.users.find(u => u.username === username && u.password === password && u.role === 'admin');
+                if (user) {
+                    const { password, ...safeUser } = user;
+                    localStorage.setItem(STORAGE_SESSION, JSON.stringify(safeUser));
+                    return safeUser;
+                }
+                return null;
+            }
+
+            logout() {
+                localStorage.removeItem(STORAGE_SESSION);
+            }
+
+            addMember(memberData) {
+                const newMember = {
+                    id: generateId(),
+                    ...memberData,
+                    role: 'member',
+                    joinDate: new Date().toISOString()
+                };
+                this.users.push(newMember);
+                this.saveUsers();
+                return newMember;
+            }
+
+            updateMember(id, updatedData) {
+                const index = this.users.findIndex(u => u.id === id);
+                if (index !== -1) {
+                    this.users[index] = { ...this.users[index], ...updatedData };
+                    this.saveUsers();
+                    return true;
+                }
+                return false;
+            }
+
+            deleteMember(id) {
+                this.users = this.users.filter(u => u.id !== id);
+                this.saveUsers();
+                return true;
+            }
+
+            getStats() {
+                const members = this.getAllMembers();
+                return { total: members.length };
+            }
+        }
+
+        function renderLoginPage() {
+            document.getElementById('app').innerHTML = `
+                <div style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg,#0f172a,#1e1b4b)">
+                    <div style="background:white; border-radius:24px; padding:2.5rem; width:100%; max-width:400px">
+                        <div style="text-align:center; margin-bottom:1rem">
+                            <h2 style="color:#ef4444">⚡ FAHRIL PROJECT</h2>
+                            <p style="color:#64748b">Admin Panel</p>
+                        </div>
+                        <h2 style="margin-bottom:1.5rem">🔐 Login Admin</h2>
+                        <form id="login-form">
+                            <input type="text" id="username" placeholder="Username" required style="width:100%; padding:12px; margin-bottom:1rem; border:1px solid #cbd5e1; border-radius:8px">
+                            <input type="password" id="password" placeholder="Password" required style="width:100%; padding:12px; margin-bottom:1rem; border:1px solid #cbd5e1; border-radius:8px">
+                            <button type="submit" style="width:100%; padding:12px; background:linear-gradient(135deg,#ef4444,#f97316); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer">Login</button>
+                        </form>
+                        <div id="login-error" style="color:#ef4444; text-align:center; margin-top:1rem"></div>
+                        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e2e8f0; font-size:0.8rem; text-align:center">
+                            <p><strong>Akun Demo:</strong></p>
+                            <p>Username: admin | Password: admin123</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const admin = userManager.login(username, password);
+                
+                if (admin) {
+                    renderApp();
+                } else {
+                    document.getElementById('login-error').textContent = 'Username atau password salah! (Hanya admin yang bisa login)';
+                }
+            });
+        }
+
+        function renderApp() {
+            const admin = userManager.getCurrentAdmin();
+            if (!admin) {
+                renderLoginPage();
+                return;
+            }
+
+            document.getElementById('app').innerHTML = `
+                <div style="display:flex; min-height:100vh">
+                    <aside class="sidebar">
+                        <div class="logo">
+                            <h2>⚡ FAHRIL PROJECT</h2>
+                            <div style="font-size:0.7rem; color:#94a3b8">Admin Panel</div>
+                        </div>
+                        <div class="user-info">
+                            <div class="user-avatar">👑</div>
+                            <div class="user-name">${escapeHtml(admin.name)}</div>
+                            <div class="user-role">ADMIN</div>
+                            <button class="logout-btn" id="logout-btn">🚪 Logout</button>
+                        </div>
+                        <nav>
+                            <button class="nav-btn active" data-view="dashboard">📊 Dashboard</button>
+                            <button class="nav-btn" data-view="member-list">👥 Kelola Member</button>
+                            <button class="nav-btn" data-view="add-member">➕ Tambah Member</button>
+                        </nav>
+                    </aside>
+                    <main class="main-content">
+                        <div class="content-header">
+                            <h1 id="page-title">📊 Dashboard Admin</h1>
+                        </div>
+                        <div id="view-container"></div>
+                        <div style="text-align:center; padding:1.5rem; color:#94a3b8">
+                            © 2024 FAHRIL PROJECT | Admin Panel
+                        </div>
+                    </main>
+                </div>
+            `;
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                userManager.logout();
+                renderLoginPage();
+            });
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const view = btn.dataset.view;
+                    const titles = { 'dashboard': '📊 Dashboard Admin', 'member-list': '👥 Kelola Member', 'add-member': '➕ Tambah Member' };
+                    document.getElementById('page-title').innerHTML = titles[view];
+                    renderView(view);
+                });
+            });
+
+            renderView('dashboard');
+        }
+
+        function renderView(view) {
+            const container = document.getElementById('view-container');
+            if (view === 'dashboard') renderDashboard(container);
+            else if (view === 'member-list') renderMemberList(container);
+            else if (view === 'add-member') renderAddMemberForm(container);
+        }
+
+        function renderDashboard(container) {
+            const members = userManager.getAllMembers();
+            const stats = userManager.getStats();
+            
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.total}</div>
+                        <div>Total Member</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${members.filter(m => new Date(m.joinDate) > new Date(Date.now() - 7*24*60*60*1000)).length}</div>
+                        <div>Member Baru (7 hari)</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📋 Semua Member</h3>
+                    ${renderMemberTable(members)}
+                </div>
+            `;
+            attachTableEvents(container);
+        }
+
+        function renderMemberList(container) {
+            const members = userManager.getAllMembers();
+            container.innerHTML = `
+                <div class="card">
+                    <h3>👥 Daftar Member (${members.length})</h3>
+                    ${members.length === 0 ? '<p>Belum ada member.</p>' : renderMemberTable(members)}
+                </div>
+            `;
+            attachTableEvents(container);
+        }
+
+        function renderAddMemberForm(container) {
+            container.innerHTML = `
+                <div class="card">
+                    <h3>✨ Tambah Member Baru</h3>
+                    <form id="member-form">
+                        <div class="form-group"><label>Nama Lengkap</label><input type="text" name="name" required></div>
+                        <div class="form-group"><label>Username</label><input type="text" name="username" required></div>
+                        <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
+                        <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                        <div class="form-group"><label>No. Telepon</label><input type="text" name="phone" required></div>
+                        <button type="submit">💾 Simpan Member</button>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById('member-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const existing = userManager.getAllMembers().find(u => u.username === formData.get('username'));
+                if (existing) {
+                    showAlert('Username sudah terdaftar!', 'error');
+                    return;
+                }
+                userManager.addMember({
+                    name: formData.get('name'),
+                    username: formData.get('username'),
+                    password: formData.get('password'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone')
+                });
+                showAlert('Member berhasil ditambahkan!', 'success');
+                document.querySelector('[data-view="member-list"]').click();
+            });
+        }
+
+        function renderMemberTable(members) {
+            return `
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead><tr><th>Nama</th><th>Username</th><th>Email</th><th>Telepon</th><th>Bergabung</th><th>Aksi</th></tr></thead>
+                        <tbody>
+                            ${members.map(m => `
+                                <tr>
+                                    <td>${escapeHtml(m.name)}</td>
+                                    <td>${escapeHtml(m.username)}</td>
+                                    <td>${escapeHtml(m.email)}</td>
+                                    <td>${escapeHtml(m.phone)}</td>
+                                    <td>${formatDate(m.joinDate)}</td>
+                                    <td>
+                                        <button class="btn-edit" data-id="${m.id}">✏️ Edit</button>
+                                        <button class="btn-delete" data-id="${m.id}">🗑️ Hapus</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function attachTableEvents(container) {
+            container.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const member = userManager.getAllMembers().find(m => m.id === id);
+                    const newName = prompt('Edit Nama:', member?.name);
+                    if (newName && newName !== member?.name) {
+                        userManager.updateMember(id, { name: newName });
+                        showAlert('Member berhasil diupdate!', 'success');
+                        renderView('member-list');
+                    }
+                });
+            });
+            
+            container.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const member = userManager.getAllMembers().find(m => m.id === id);
+                    if (confirm(`Yakin hapus member "${member?.name}"?`)) {
+                        userManager.deleteMember(id);
+                        showAlert('Member berhasil dihapus!', 'success');
+                        renderView('member-list');
+                    }
+                });
+            });
+        }
+
+        const userManager = new UserManager();
+        if (userManager.getCurrentAdmin()) {
+            renderApp();
+        } else {
+            renderLoginPage();
+        }
+    </script>
+</body>
+</html>

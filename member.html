@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Area - FahriL Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .logo h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .card h2, .card h3 {
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        /* Profile */
+        .profile-avatar {
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .profile-info {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .profile-info p {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // ==================== MEMBER AREA - FAHRIL PROJECT ====================
+        // Member hanya bisa: Daftar (register) & Lihat profil sendiri
+        // Member TIDAK BISA edit/hapus profil orang lain
+
+        const STORAGE_USERS = 'fahriL_member_users';
+        const STORAGE_SESSION = 'fahriL_member_session';
+
+        // Data default member
+        const DEFAULT_MEMBERS = [
+            { id: 'mem_001', username: 'ahmad', password: 'member123', name: 'Ahmad Fauzi', email: 'ahmad@example.com', phone: '081234567891', role: 'member', joinDate: new Date().toISOString() },
+            { id: 'mem_002', username: 'siti', password: 'member123', name: 'Siti Nurhaliza', email: 'siti@example.com', phone: '081234567892', role: 'member', joinDate: new Date().toISOString() }
+        ];
+
+        function generateId() {
+            return 'MEM_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+            });
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('view-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            if (container) {
+                container.insertBefore(alertDiv, container.firstChild);
+                setTimeout(() => alertDiv.remove(), 3000);
+            }
+        }
+
+        class MemberSystem {
+            constructor() {
+                this.loadUsers();
+            }
+
+            loadUsers() {
+                const stored = localStorage.getItem(STORAGE_USERS);
+                if (stored) {
+                    this.users = JSON.parse(stored);
+                } else {
+                    this.users = [...DEFAULT_MEMBERS];
+                    this.saveUsers();
+                }
+            }
+
+            saveUsers() {
+                localStorage.setItem(STORAGE_USERS, JSON.stringify(this.users));
+            }
+
+            getCurrentMember() {
+                const session = localStorage.getItem(STORAGE_SESSION);
+                return session ? JSON.parse(session) : null;
+            }
+
+            login(username, password) {
+                const user = this.users.find(u => u.username === username && u.password === password && u.role === 'member');
+                if (user) {
+                    const { password, ...safeUser } = user;
+                    localStorage.setItem(STORAGE_SESSION, JSON.stringify(safeUser));
+                    return safeUser;
+                }
+                return null;
+            }
+
+            register(memberData) {
+                // Cek username sudah ada atau belum
+                const existing = this.users.find(u => u.username === memberData.username);
+                if (existing) {
+                    return { success: false, message: 'Username sudah terdaftar!' };
+                }
+                
+                const newMember = {
+                    id: generateId(),
+                    ...memberData,
+                    role: 'member',
+                    joinDate: new Date().toISOString()
+                };
+                this.users.push(newMember);
+                this.saveUsers();
+                return { success: true, message: 'Pendaftaran berhasil! Silakan login.', data: newMember };
+            }
+
+            logout() {
+                localStorage.removeItem(STORAGE_SESSION);
+            }
+
+            updateOwnProfile(id, updatedData) {
+                const index = this.users.findIndex(u => u.id === id);
+                if (index !== -1) {
+                    this.users[index] = { ...this.users[index], ...updatedData };
+                    this.saveUsers();
+                    
+                    // Update session
+                    const current = this.getCurrentMember();
+                    if (current && current.id === id) {
+                        const { password, ...safeUser } = this.users[index];
+                        localStorage.setItem(STORAGE_SESSION, JSON.stringify(safeUser));
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        function renderLoginRegisterPage() {
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div class="header">
+                        <div class="logo">
+                            <h1>⚡ FAHRIL PROJECT</h1>
+                            <p>Member Area</p>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-tabs">
+                        <button class="nav-btn active" data-tab="login">🔐 Login</button>
+                        <button class="nav-btn" data-tab="register">📝 Daftar Member Baru</button>
+                    </div>
+                    
+                    <div id="login-container">
+                        <div class="card">
+                            <h2>🔐 Login Member</h2>
+                            <form id="login-form">
+                                <div class="form-group">
+                                    <label>Username</label>
+                                    <input type="text" id="login-username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Password</label>
+                                    <input type="password" id="login-password" required>
+                                </div>
+                                <button type="submit">Login</button>
+                            </form>
+                            <div id="login-error" style="color:#ef4444; margin-top:1rem; text-align:center"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="register-container" style="display:none">
+                        <div class="card">
+                            <h2>📝 Daftar Member Baru</h2>
+                            <div class="info-box">
+                                💡 Info: Setelah mendaftar, Anda bisa login dan melihat profil sendiri.
+                                Admin akan mengelola data Anda.
+                            </div>
+                            <form id="register-form">
+                                <div class="form-group">
+                                    <label>Nama Lengkap</label>
+                                    <input type="text" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Username</label>
+                                    <input type="text" name="username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Password</label>
+                                    <input type="password" name="password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>No. Telepon</label>
+                                    <input type="text" name="phone" required>
+                                </div>
+                                <button type="submit">📝 Daftar Sekarang</button>
+                            </form>
+                            <div id="register-result" style="margin-top:1rem; text-align:center"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align:center; padding:1.5rem; color:rgba(255,255,255,0.7)">
+                        © 2024 FAHRIL PROJECT | Member Area
+                    </div>
+                </div>
+            `;
+
+            // Tab切换
+            document.querySelectorAll('[data-tab]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const tab = btn.dataset.tab;
+                    document.getElementById('login-container').style.display = tab === 'login' ? 'block' : 'none';
+                    document.getElementById('register-container').style.display = tab === 'register' ? 'block' : 'none';
+                });
+            });
+
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                const member = memberSystem.login(username, password);
+                
+                if (member) {
+                    renderMemberDashboard();
+                } else {
+                    document.getElementById('login-error').textContent = 'Username atau password salah!';
+                }
+            });
+
+            // Register form
+            document.getElementById('register-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const result = memberSystem.register({
+                    name: formData.get('name'),
+                    username: formData.get('username'),
+                    password: formData.get('password'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone')
+                });
+                
+                const resultDiv = document.getElementById('register-result');
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="alert alert-success">✅ ${result.message}</div>`;
+                    e.target.reset();
+                    // Switch ke tab login setelah 2 detik
+                    setTimeout(() => {
+                        document.querySelector('[data-tab="login"]').click();
+                    }, 2000);
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-error">❌ ${result.message}</div>`;
+                }
+            });
+        }
+
+        function renderMemberDashboard() {
+            const member = memberSystem.getCurrentMember();
+            if (!member) {
+                renderLoginRegisterPage();
+                return;
+            }
+
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div class="header">
+                        <div class="logo">
+                            <h1>⚡ FAHRIL PROJECT</h1>
+                            <p>Member Area</p>
+                        </div>
+                        <div class="user-info">
+                            <span>👋 Halo, ${escapeHtml(member.name)}</span>
+                            <button class="logout-btn" id="logout-btn">🚪 Logout</button>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-tabs">
+                        <button class="nav-btn active" data-view="profile">👤 Profil Saya</button>
+                    </div>
+                    
+                    <div id="view-container"></div>
+                    
+                    <div style="text-align:center; padding:1.5rem; color:rgba(255,255,255,0.7)">
+                        © 2024 FAHRIL PROJECT | Member Area
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                memberSystem.logout();
+                renderLoginRegisterPage();
+            });
+
+            renderProfileView();
+        }
+
+        function renderProfileView() {
+            const member = memberSystem.getCurrentMember();
+            const container = document.getElementById('view-container');
+            
+            container.innerHTML = `
+                <div class="card">
+                    <h2>👤 Profil Saya</h2>
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-info">
+                        <p><strong>Nama Lengkap:</strong> ${escapeHtml(member.name)}</p>
+                        <p><strong>Username:</strong> ${escapeHtml(member.username)}</p>
+                        <p><strong>Email:</strong> ${escapeHtml(member.email)}</p>
+                        <p><strong>Telepon:</strong> ${escapeHtml(member.phone)}</p>
+                        <p><strong>Bergabung:</strong> ${formatDate(member.joinDate)}</p>
+                        <p><strong>Role:</strong> 👤 Member</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>✏️ Edit Profil Saya</h3>
+                    <div class="info-box">
+                        ⚠️ Anda hanya bisa mengedit profil Anda sendiri. Data member lain hanya bisa diubah oleh Admin.
+                    </div>
+                    <form id="edit-profile-form">
+                        <div class="form-group">
+                            <label>Nama Lengkap</label>
+                            <input type="text" name="name" value="${escapeHtml(member.name)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" value="${escapeHtml(member.email)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>No. Telepon</label>
+                            <input type="text" name="phone" value="${escapeHtml(member.phone)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password Baru (kosongkan jika tidak diganti)</label>
+                            <input type="password" name="password" placeholder="Masukkan password baru">
+                        </div>
+                        <button type="submit">💾 Update Profil Saya</button>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById('edit-profile-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const updateData = {
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone')
+                };
+                const newPassword = formData.get('password');
+                if (newPassword) updateData.password = newPassword;
+                
+                memberSystem.updateOwnProfile(member.id, updateData);
+                showAlert('Profil Anda berhasil diupdate!', 'success');
+                renderProfileView();
+            });
+        }
+
+        const memberSystem = new MemberSystem();
+        
+        if (memberSystem.getCurrentMember()) {
+            renderMemberDashboard();
+        } else {
+            renderLoginRegisterPage();
+        }
+    </script>
+</body>
+</html>
